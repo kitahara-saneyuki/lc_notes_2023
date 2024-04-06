@@ -1,433 +1,105 @@
-#### 反转链表
+# 链表
 
-##### 206. Reverse Linked List
+## 链表的递归遍历
 
-反转链表母题，需要熟练掌握各种变量的变化顺序，追踪两个变量法
+链表结构，天生具有递归性，我们尝试一下递归思维，解决最普遍的题目，反转链表。
 
-```java
-public ListNode reverseList(ListNode head) {
-    ListNode newHead = null;
-    while (head != null){
-        ListNode headNext = head.next;
-        head.next = newHead;
-        newHead = head;
-        head = headNext;
-    }
-    return newHead;
-}
-```
-
-##### 92. Reverse Linked List II
-
-反转链表有很多种方式，上一题只是其中一种，这次我们来试试第二种，实际只追踪一个变量
-
-```java
-public ListNode reverseBetween(ListNode head, int m, int n) {
-    ListNode dummy = new ListNode(0);
-    dummy.next = head;
-    ListNode startL = dummy;
-    for (int i = 0; i<m-1; i++)
-        startL = startL.next;
-    ListNode cur = startL.next;
-    for (int i = m; i<n; i++){
-        ListNode curNext = cur.next;
-        cur.next = curNext.next;
-        curNext.next = startL.next;
-        startL.next = curNext;
-    }
-    return dummy.next;
-}
-```
-
-##### 25. Reverse Nodes in k-Group
-
-1. 假设起点为i，每次前推k个node
-2. 然后翻转[i, i+k]
+前序遍历之中，你可以想象，前面的链表都已经处理好了，只需要改变后面的链表就行。
 
 ```py
-def reverseKGroup(self, head, k):
-    dummy = jump = ListNode(0)
-    dummy.next = l = r = head
-
-    while True:
-        count = 0
-        # use r to locate the range
-        while r and count < k:
-            r = r.next
-            count += 1
-        # if size k satisfied, reverse the inner linked list
-        if count == k:
-            pre, cur = r, l
-            for _ in range(k):
-                # standard reversing
-                cur.next, cur, pre = pre, cur.next, cur
-            # connect two k-groups
-            jump.next, jump, l = pre, l, r
-        else:
-            return dummy.next
+def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def dfs(curr, prev):
+        # 最后返回尾节点
+        if not curr: return prev
+        next = curr.next
+        # 主逻辑：每次递归只改变一个箭头
+        curr.next = prev
+        return dfs(next, curr)
+    return dfs(head, None)
 ```
 
-##### 24. Swap Nodes in Pairs
-
-简单题，注意顺序即可
-
-```java
-public ListNode swapPairs(ListNode head) {
-    ListNode dummy = new ListNode(0);
-    dummy.next = head;
-    ListNode prev = dummy;
-    ListNode cur;
-    ListNode move;
-    while (prev.next != null && prev.next.next != null){
-        cur = prev.next;
-        move = cur.next;
-        prev.next = move;
-        cur.next = move.next;
-        move.next = cur;
-        prev = cur;
-    }
-    return dummy.next;
-}
-```
-
-##### 61. Rotate List
-
-```md
-Input: 1->2->3->4->5->NULL, k = 2
-Output: 4->5->1->2->3->NULL
-Explanation:
-rotate 1 steps to the right: 5->1->2->3->4->NULL
-rotate 2 steps to the right: 4->5->1->2->3->NULL
-```
-
-这题的题眼在于k有可能会大于list长度……所以需要先遍历一轮list求长度，然后取余，然后rotate
-
-```java
-public ListNode rotateRight(ListNode head, int n) {
-    if (head == null || head.next == null)
-        return head;
-    ListNode dummy = new ListNode(0);
-    dummy.next = head;
-    ListNode fast = dummy,slow = dummy;
-
-    int i;
-    // Get the total length
-    for (i = 0; fast.next != null; i++)
-        fast = fast.next;
-    // Get the i - n % i th node
-    for (int j = i - n % i; j > 0; j--)
-        slow = slow.next;
-    // Do the rotation
-    fast.next = dummy.next;
-    dummy.next = slow.next;
-    slow.next = null;
-
-    return dummy.next;
-}
-```
-
-#### 快慢指针
-
-##### 141 & 142. Linked List Cycle I & II
-
-这俩题快慢指针典型题，1的话就是快慢指针会在环路中相撞
-
-```python
-def hasCycle(self, head: Optional[ListNode]) -> bool:
-    slow = fast = head
-    while fast and fast.next:
-        slow = slow.next
-        fast = fast.next.next
-        if slow == fast: return True
-    return False
-```
-
-找端点这题需要一点思量
-
-1. 假定环路长度是N，环路起点是A
-2. 那么快慢指针相遇时候，慢指针走了A+B，快指针走了2A+2B
-3. 所以推论出来A+B+N=2A+2B，所以N=A+B，那么A+N=A+A+B
-4. 所以再找个第三根指针跟慢指针同步向前走，两者相遇的时候就找到了A
-
-```java
-public ListNode detectCycle(ListNode head) {
-    ListNode slow = head, fast = head;
-    while(fast != null && fast.next != null) {
-        fast = fast.next.next;
-        slow = slow.next;
-        if (slow == fast) {
-            while (head != slow) {
-                head = head.next;
-                slow = slow.next;
-            }
-            return slow;
-        }
-    }
-    return null;
-}
-```
-
-##### 143. Reorder List
-
-Given 1->2->3->4->5, reorder it to 1->5->2->4->3.
-
-这题见过就不难：
-
-1. 用快慢指针找到中点，从中点将链表截成两段
-2. 把后半段链表反转
-3. 把两个链表merge
+后序遍历则与之相反，你可以想象，后面的链表都已经处理好了，只需要改变前面的链表就行。
 
 ```py
-# @return A tuple containing the heads of the two halves
-def _splitList(head):
-    fast = head
-    slow = head
-    while fast and fast.next:
-        slow = slow.next
-        fast = fast.next
-        fast = fast.next
-    middle = slow.next
-    slow.next = None
-    return head, middle
-
-# Reverses in place a list.
-# @return Returns the head of the new reversed list
-def _reverseList(head):
-    last = None
-    currentNode = head
-    while currentNode:
-        nextNode = currentNode.next
-        currentNode.next = last
-        last = currentNode
-        currentNode = nextNode
-    return last
-
-# Merges in place two lists
-# @return The newly merged list.
-def _mergeLists(a, b):
-    tail = a
-    head = a
-    a = a.next
-    while b:
-        tail.next = b
-        tail = tail.next
-        b = b.next
-        if a:
-            a, b = b, a
-    return head
-
-class Solution:
-    # @param head, a ListNode
-    # @return nothing
-    def reorderList(self, head):
-        if not head or not head.next:
-            return
-        a, b = _splitList(head)
-        b = _reverseList(b)
-        head = _mergeLists(a, b)
+def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def dfs(curr):
+        # 边界条件
+        if not curr or not curr.next: return curr
+        # 后序遍历
+        ret = dfs(curr.next)
+        # 主逻辑
+        curr.next.next = curr
+        # 现在先置空并没有关系，因为 dfs 过程结束后会自动回推一格
+        curr.next = None
+        return ret
+    return dfs(head)
 ```
 
-##### 234. Palindrome Linked List
+考点：
+1.  指针的修改
+1.  链表的拼接
 
-快慢指针求中点，然后用慢指针作为中点往后遍历，前半部分是本题的难点，如果希望不改动链表的话，需要从头到尾再从尾到头翻转两次
+需要注意：
+1.  生成环
+1.  没搞清边界
 
-```java
-def isPalindrome(self, head):
-    slow, fast = head, head
-    rev = None
-    while fast and fast.next:
-        fast = fast.next.next
-        rev, rev.next, slow = slow, rev, slow.next
-    if fast: tail = slow.next
-    else: tail = slow
-    while rev:
-        if rev.val != tail.val: return False
-        slow, slow.next, rev = rev, slow, rev.next
-        tail = tail.next
-    return True
-```
+技巧：
+1.  虚拟头
+1.  快慢指针
+1.  拼接链表
 
-##### 160. Intersection of Two Linked Lists
+做题策略
+1.  先穿针引线
+1.  再排列组合
+1.  排除潜在的空指针异常
 
-1. 双指针按同一速度推进两截链表A-C和B-C
-2. 当他们都走到尽头时交换位置，让他们走一个A-C-B和B-C-A
-3. 如此他们的长度差就被抹掉，交汇处就是两链表交点
+## 归类题解
 
-```python
-# @param two ListNodes
-# @return the intersected ListNode
-def getIntersectionNode(self, headA, headB):
-    if headA is None or headB is None:
-        return None
+### 链表概念
 
-    pa = headA # 2 pointers
-    pb = headB
+- [707] 
 
-    while pa is not pb:
-        # if either pointer hits the end, switch head and continue the second traversal,
-        # if not hit the end, just move on to next
-        pa = headB if pa is None else pa.next
-        pb = headA if pb is None else pb.next
+### 快慢指针
 
-    return pa # only 2 ways to get out of the loop, they meet or the both hit the end=None
+- [876] 链表中点
+    - 快慢指针母题，需要注意边界条件，因为快指针一次前进两格，边界条件就是 `快指针自己和快指针下一格都非空`
+- [141] 链表环1, [142] 链表环2
+    - 我们希望求得的值是链表环的起点下标 $a$ ，我们假设快慢指针相遇时慢指针走了 $a + b$ 步，那么慢指针就走了 $2a + 2b$ 步，环长为 $n = a + b$ 步
+    - 那么我们的慢指针已经走了 $a + b$ 步，想要求得 $a$ ，我们可以考虑 $a + n = a + a + b$ ，再找第三根指针，与慢指针同步，两者相遇时，第三根指针走过的步数，就是环的起点
+- [1721] 交换链表中左数第 k 个和右数第 k 个元素
+    - 双指针，指针ABC都从头开始，指针A和B从左往右走k次，然后指针B和指针C同步一直走到头，再交换指针A和C
 
-# the idea is if you switch head, the possible difference between length would be countered.
-# On the second traversal, they either hit or miss.
-# if they meet, pa or pb would be the node we are looking for,
-# if they didn't meet, they will hit the end at the same iteration, pa == pb == None, return either one of them is the same, None
-```
+### 穿针引线
 
-#### 其他杂题
+- [206] 反转链表, [92] 反转从 m 到 n 之间的链表
+    - 反转链表的迭代写法较为直观，画图即可，递归写法见文首遍历链表
+    - 比较容易记忆的反转链表做法，一般都需要虚拟头
+- [24] 交换节点
+    - 无脑虚拟头，无脑画图
+    - 考点：指针向下推进到哪个节点？
+- [21] 归并排序两个链表, [23] 归并排序k个链表, [148] 排序链表
+    - 使用虚拟头归并两个链表，使用递归归并k个链表
+    - 考点：如果使用归并排序的话，要注意取中点的时候，快指针不需要走到头
+- [61] 向右把链表旋转 k 步
+    - 题眼： k 有可能大于列表长度，因此需要先求出列表长度，再旋转
+    - 考点：需要注意 corner case ：链表长度为 0 ， k 为 0
+- [86] 链表按给定值二分，再拼接
+    - 考点： **避免成环** ：后半部分链表的尾端，箭头需要置空
 
-##### 2. Add Two Numbers
+### 节点操作
 
-Input: (2 > 4 > 3) + (5 > 6 > 4)
+- [82] 删除重复节点（含自己）, [83] 删除重复节点（不含自己）
+    - 不含自己的话我们每次遇到 `next` 与自己值相同的节点就删除
+    - 含自己也删的话需要使用虚拟头，每次遇到下两个节点值相同时，保存这一值，并删除后面所有与此值相同的节点
+- [203] 删除有给定值的节点
+    - 考点：虚拟头
+- [237] 只给定链表的一个节点的指针，删除这一节点
+    - 把下一节点的值挪到这一节点上，再删除下一节点
+- [2] 两数相加
+    - 考点：当其中一个列表已经加完的时候，还带着进位的话，存在无限进位的可能（即 $1 + 999...9 = 1000...0$ ）
+    - 既然我们已经考虑过了无限进位，在无限进位之后还带着进位的话，直接在答案末尾加 $1$ 即可
 
-Output: 7 > 0 > 8
+### 递归遍历（难题）
 
-这个题目的难点在于corner case多而且庞杂，但实际上不需要转换成十进制数字，因为他本身提供的链表就是从小到大的，符合加法的计算习惯，生加即可
-
-```java
-public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
-    ListNode dummy = new ListNode(0);
-    ListNode cur = dummy;
-    int c = 0;
-    while (l1 != null || l2 != null){
-        int a = 0, b = 0, d = 0;
-        // a, b
-        if (l1 != null) {
-            a = l1.val;
-            l1 = l1.next;
-        }
-        if (l2 != null) {
-            b = l2.val;
-            l2 = l2.next;
-        }
-        // c is carrier
-        if (a + b + c >= 10) {
-            d = (a + b + c) % 10;
-            c = 1;
-        } else {
-            d = a + b + c;
-            c = 0;
-        }
-        cur.next = new ListNode(d);
-        cur = cur.next;
-    }
-    if (c != 0) {
-        cur.next = new ListNode(c);
-        cur = cur.next;
-    }
-    cur.next = null;
-    return dummy.next;
-}
-```
-
-##### 23. Merge k Sorted Lists
-
-题目很直接就不再重复叙述了，这题最直截了当的想法是分治调用merge 2 sorted lists的函数，而后者是个人就会写
-
-```py
-def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
-    cur = res = ListNode()
-    while list1 and list2:
-        if list1.val < list2.val:
-            cur.next = list1
-            list1 = list1.next
-        else:
-            cur.next = list2
-            list2 = list2.next
-        cur = cur.next
-    if list1 or list2:
-        cur.next = list1 if list1 else list2
-    return res.next
-
-def mergeKLists(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:
-    if not lists: return None
-    elif len(lists) == 1: return lists[0]
-    else:
-        l = len(lists)
-        return self.mergeTwoLists(self.mergeKLists(lists[:l//2]), self.mergeKLists(lists[l//2:]))
-```
-
-##### 138. Copy List with Random Pointer
-
-这题目的题眼就是用一个map把链表的每个node存好……
-
-```java
-public RandomListNode copyRandomList(RandomListNode head) {
-    if (head == null) return null;
-    Map<RandomListNode, RandomListNode> map = new HashMap<RandomListNode, RandomListNode>();
-    // loop 1. copy all the nodes
-    RandomListNode node = head;
-    while (node != null) {
-        map.put(node, new RandomListNode(node.label));
-        node = node.next;
-    }
-    // loop 2. assign next and random pointers
-    node = head;
-    while (node != null) {
-        map.get(node).next = map.get(node.next);
-        map.get(node).random = map.get(node.random);
-        node = node.next;
-    }
-    return map.get(head);
-}
-```
-
-##### 147. Insertion Sort List
-
-这题还真不是一个简单题，需要注意的就是如果插入位置后面的最小值就是插入位置本身的话，就不需要再移动
-
-```py
-def insertionSortList(self, head):
-    dummy = ListNode(0)
-    dummy.next = head
-    inscur = dummy;
-    while inscur.next != None:
-        min = 2**32
-        cur = inscur
-        tempNode = None
-        while cur.next != None:
-            if cur.next.val < min:
-                min = cur.next.val
-                tempNode = cur
-            cur = cur.next
-        if tempNode != inscur:
-            temp = tempNode.next.next
-            tempNode.next.next = inscur.next
-            inscur.next = tempNode.next
-            tempNode.next = temp
-        inscur = inscur.next
-    return dummy.next
-```
-
-##### 148. Sort List
-
-这题反而不难。。。注意细节
-
-```py
-def sortList(self, head):
-    """
-    :type head: ListNode
-    :rtype: ListNode
-    """
-    # Corner case
-    if head == None or head.next == None:
-        return head
-    # find middle node using fast & slow pointer
-    slow = head
-    fast = head
-    while fast.next != None and fast.next.next != None:
-        slow = slow.next
-        fast = fast.next.next
-    a = head
-    b = slow.next
-    # truncate list by middle node
-    slow.next = None
-    # recursion
-    a = self.sortList(a)
-    b = self.sortList(b)
-    # use merge sort
-    return self.mergeTwoLists(a, b)
-```
+- [25] k 个一组反转链表
+    - 考点：
